@@ -154,6 +154,20 @@ is(Git::unquote_path('"abc\"\\\\ \a\b\t\n\v\f\r\001\040"'),
 		     "abc\"\\ \x07\x08\x09\x0a\x0b\x0c\x0d\x01 ",
 		     'unquote escape sequences');
 
+# ensure --batch-check is unbuffered by default
+my ($pid, $in, $out, $ctx) = $r->command_bidi_pipe(qw(cat-file --batch-check));
+print $out $file1hash, "\n" or die $!;
+my $info = <$in>;
+is $info, "$file1hash blob 15\n", 'command_bidi_pipe w/ --batch-check';
+$r->command_close_bidi_pipe($pid, $in, $out, $ctx);
+
+# ditto with `info' with --batch-command
+($pid, $in, $out, $ctx) = $r->command_bidi_pipe(qw(cat-file --batch-command));
+print $out 'info ', $file1hash, "\n" or die $!;
+$info = <$in>;
+is $info, "$file1hash blob 15\n", 'command_bidi_pipe w/ --batch-command=info';
+$r->command_close_bidi_pipe($pid, $in, $out, $ctx);
+
 printf "1..%d\n", Test::More->builder->current_test;
 
 my $is_passing = eval { Test::More->is_passing };
